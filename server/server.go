@@ -13,6 +13,11 @@ type Server struct {
 	*http.ServeMux
 }
 
+type Route struct {
+	Path    string
+	Handler http.Handler
+}
+
 // newCorsHandler creates a new CORS handler
 func cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -30,14 +35,18 @@ func cors(next http.Handler) http.Handler {
 	})
 }
 
-// ConnectServer connects a server to a port
-func (s *Server) ConnectServer(path, port string, hndlr http.Handler) error {
+// ConnectServer connects a server to a port with multiple routes
+func (s *Server) ConnectServer(port string, routes []Route) error {
 	r := mux.NewRouter()
 	r.Use(cors)
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.NewRoute().PathPrefix(path).Handler(hndlr)
+
+	// Add each route to the router
+	for _, route := range routes {
+		r.NewRoute().PathPrefix(route.Path).Handler(route.Handler)
+	}
 
 	// Create a server object with a custom error log
 	server := &http.Server{
