@@ -44,11 +44,20 @@ func (s *Server) ConnectServer(port string, routes []Route) error {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
+	serverRoutes := make([]Route, len(routes))
+	for i, r := range routes {
+		serverRoutes[i] = Route{
+			Path:    r.Path,
+			Handler: r.Handler,
+			Method:  r.Method,
+		}
+	}
+
 	// Add each route to the router
-	for _, route := range routes {
-		r.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
-			route.Handler.ServeHTTP(w, r)
-		}).Methods(route.Method)
+	for _, serverRoute := range serverRoutes {
+		r.HandleFunc(serverRoute.Path, func(w http.ResponseWriter, r *http.Request) {
+			serverRoute.Handler.ServeHTTP(w, r)
+		}).Methods(serverRoute.Method)
 	}
 
 	// Create a server object with a custom error log
