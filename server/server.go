@@ -15,6 +15,7 @@ type Server struct {
 
 type Route struct {
 	Path    string
+	Method  string
 	Handler http.Handler
 }
 
@@ -45,7 +46,9 @@ func (s *Server) ConnectServer(port string, routes []Route) error {
 
 	// Add each route to the router
 	for _, route := range routes {
-		r.NewRoute().PathPrefix(route.Path).Handler(route.Handler)
+		r.HandleFunc(route.Path, func(w http.ResponseWriter, r *http.Request) {
+			route.Handler.ServeHTTP(w, r)
+		}).Methods(route.Method)
 	}
 
 	// Create a server object with a custom error log
